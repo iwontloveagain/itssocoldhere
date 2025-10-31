@@ -29,6 +29,14 @@ app.get('/songs/:file', (req, res) => {
   res.sendFile(path.join(__dirname, 'songs', req.params.file));
 });
 
+// Add CORS headers for video loading
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  next();
+});
+
 // Serve index.html for root route (must be after static files)
 app.get('/', (req, res) => {
   res.setHeader('Content-Type', 'text/html');
