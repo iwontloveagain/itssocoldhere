@@ -125,20 +125,34 @@
             var bgVideo = document.getElementById('bg-video');
             if (!bgVideo) return;
             
+            // Configurar vídeo
             bgVideo.muted = true;
             bgVideo.loop = true;
+            bgVideo.autoplay = true;
             bgVideo.setAttribute('playsinline', 'true');
             bgVideo.setAttribute('webkit-playsinline', 'true');
+            bgVideo.setAttribute('preload', 'auto');
             
-            // Tentar reproduzir
+            // Tentar reproduzir imediatamente
             var playPromise = bgVideo.play();
             if (playPromise !== undefined) {
-                playPromise.catch(function(err) {
-                    // Se falhar, tentar novamente com delay
+                playPromise.then(function() {
+                    // Vídeo está tocando
+                }).catch(function(err) {
+                    // Se falhar, tentar várias vezes
                     setTimeout(function() {
-                        bgVideo.play().catch(function() {});
-                    }, 300);
+                        bgVideo.play().catch(function() {
+                            setTimeout(function() {
+                                bgVideo.play().catch(function() {});
+                            }, 500);
+                        });
+                    }, 100);
                 });
+            } else {
+                // Fallback se play() não retornar promise
+                setTimeout(function() {
+                    bgVideo.play().catch(function() {});
+                }, 100);
             }
         }
         
@@ -163,13 +177,17 @@
         overlay.addEventListener('click', enterSite);
         
         // Tentar autoplay no carregamento (pode funcionar no PC)
-        window.addEventListener('load', function() {
-            startVideo();
-        });
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                setTimeout(startVideo, 100);
+            });
+        } else {
+            setTimeout(startVideo, 100);
+        }
         
-        // Tentar também no DOMContentLoaded (mais cedo)
-        document.addEventListener('DOMContentLoaded', function() {
-            startVideo();
+        // Também tentar no window.load
+        window.addEventListener('load', function() {
+            setTimeout(startVideo, 200);
         });
 
         // Controles de tema e música
@@ -272,25 +290,32 @@
                     bgVideo.preload = 'auto';
                     bgVideo.muted = true;
                     bgVideo.loop = true;
+                    bgVideo.autoplay = true;
+                    bgVideo.setAttribute('playsinline', 'true');
+                    bgVideo.setAttribute('webkit-playsinline', 'true');
                     
                     bgVideo.load();
                     
-                    // Tentar reproduzir após carregar (garantir muted e loop)
+                    // Função para tentar reproduzir
                     function tryPlay() {
                         bgVideo.currentTime = 0;
                         bgVideo.muted = true;
                         bgVideo.loop = true;
-                        bgVideo.setAttribute('playsinline', 'true');
-                        bgVideo.setAttribute('webkit-playsinline', 'true');
+                        bgVideo.autoplay = true;
                         var playPromise = bgVideo.play();
                         if (playPromise !== undefined) {
                             playPromise.then(function() {
-                                // Sucesso
+                                // Sucesso - vídeo está tocando
                             }).catch(function(err) {
-                                // Se falhar, tentar novamente após delay
+                                // Se falhar, tentar novamente
                                 setTimeout(function() {
-                                    bgVideo.play().catch(function() {});
-                                }, 500);
+                                    bgVideo.play().catch(function() {
+                                        // Última tentativa
+                                        setTimeout(function() {
+                                            bgVideo.play().catch(function() {});
+                                        }, 500);
+                                    });
+                                }, 300);
                             });
                         }
                     }
@@ -300,6 +325,9 @@
                     bgVideo.addEventListener('canplay', tryPlay, { once: true });
                     bgVideo.addEventListener('canplaythrough', tryPlay, { once: true });
                     bgVideo.addEventListener('loadedmetadata', tryPlay, { once: true });
+                    
+                    // Garantir que toque mesmo se eventos falharem
+                    setTimeout(tryPlay, 500);
                     
                     // Trocar música padrão baseado no tema
                     var wasPlaying = !audio.paused;
