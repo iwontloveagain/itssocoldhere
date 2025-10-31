@@ -8,7 +8,7 @@
     <link rel="preload" as="video" href="https://cdn.discordapp.com/attachments/1233881458104598613/1433338245177020416/chrisis.mp4?ex=6904fc83&is=6903ab03&hm=48440c7b549962df7fc578f57d405d5de42f35600fb602bdd72bb531a996cf70&">
 </head>
 <body>
-    <video id="bg-video" muted loop playsinline preload="auto" crossorigin="anonymous" webkit-playsinline="true">
+    <video id="bg-video" autoplay muted loop playsinline preload="auto" crossorigin="anonymous" webkit-playsinline="true">
         <source src="https://cdn.discordapp.com/attachments/1233881458104598613/1433338245177020416/chrisis.mp4?ex=6904fc83&is=6903ab03&hm=48440c7b549962df7fc578f57d405d5de42f35600fb602bdd72bb531a996cf70&" type="video/mp4">
     </video>
 
@@ -120,24 +120,34 @@
             updateIcon();
         });
 
+        // Função para iniciar vídeo (garante que sempre funcione)
+        function startVideo() {
+            var bgVideo = document.getElementById('bg-video');
+            if (!bgVideo) return;
+            
+            bgVideo.muted = true;
+            bgVideo.loop = true;
+            bgVideo.setAttribute('playsinline', 'true');
+            bgVideo.setAttribute('webkit-playsinline', 'true');
+            
+            // Tentar reproduzir
+            var playPromise = bgVideo.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(function(err) {
+                    // Se falhar, tentar novamente com delay
+                    setTimeout(function() {
+                        bgVideo.play().catch(function() {});
+                    }, 300);
+                });
+            }
+        }
+        
         // Tela de entrada: fade-out e início do áudio e vídeo
         function enterSite() {
             overlay.classList.add('fade-out');
             
-            // Iniciar vídeo de fundo (funciona após interação do usuário em mobile)
-            var bgVideo = document.getElementById('bg-video');
-            bgVideo.muted = true;
-            bgVideo.loop = true;
-            var videoPlayPromise = bgVideo.play();
-            if (videoPlayPromise !== undefined) {
-                videoPlayPromise.catch(function(err) {
-                    console.log('Video play error:', err);
-                    // Se falhar, tentar novamente
-                    setTimeout(function() {
-                        bgVideo.play().catch(function() {});
-                    }, 100);
-                });
-            }
+            // Iniciar vídeo de fundo após interação (sempre funciona)
+            startVideo();
             
             // Iniciar áudio
             var p = audio.play();
@@ -152,14 +162,14 @@
         }
         overlay.addEventListener('click', enterSite);
         
-        // Tentar autoplay no carregamento (pode falhar em mobile)
+        // Tentar autoplay no carregamento (pode funcionar no PC)
         window.addEventListener('load', function() {
-            var bgVideo = document.getElementById('bg-video');
-            bgVideo.muted = true;
-            bgVideo.loop = true;
-            bgVideo.play().catch(function() {
-                // Falha silenciosa - vídeo só tocará após interação
-            });
+            startVideo();
+        });
+        
+        // Tentar também no DOMContentLoaded (mais cedo)
+        document.addEventListener('DOMContentLoaded', function() {
+            startVideo();
         });
 
         // Controles de tema e música
@@ -274,18 +284,21 @@
                         bgVideo.setAttribute('webkit-playsinline', 'true');
                         var playPromise = bgVideo.play();
                         if (playPromise !== undefined) {
-                            playPromise.catch(function(err) {
-                                console.log('Video play error:', err);
-                                // Tentar novamente após um breve delay
+                            playPromise.then(function() {
+                                // Sucesso
+                            }).catch(function(err) {
+                                // Se falhar, tentar novamente após delay
                                 setTimeout(function() {
                                     bgVideo.play().catch(function() {});
-                                }, 200);
+                                }, 500);
                             });
                         }
                     }
                     
+                    // Múltiplos eventos para garantir reprodução
                     bgVideo.addEventListener('loadeddata', tryPlay, { once: true });
                     bgVideo.addEventListener('canplay', tryPlay, { once: true });
+                    bgVideo.addEventListener('canplaythrough', tryPlay, { once: true });
                     bgVideo.addEventListener('loadedmetadata', tryPlay, { once: true });
                     
                     // Trocar música padrão baseado no tema
