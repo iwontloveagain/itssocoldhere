@@ -8,7 +8,7 @@
     <link rel="preload" as="video" href="https://cdn.discordapp.com/attachments/1233881458104598613/1433338245177020416/chrisis.mp4?ex=6904fc83&is=6903ab03&hm=48440c7b549962df7fc578f57d405d5de42f35600fb602bdd72bb531a996cf70&">
 </head>
 <body>
-    <video id="bg-video" autoplay muted loop playsinline>
+    <video id="bg-video" muted loop playsinline preload="auto" crossorigin="anonymous" webkit-playsinline="true">
         <source src="https://cdn.discordapp.com/attachments/1233881458104598613/1433338245177020416/chrisis.mp4?ex=6904fc83&is=6903ab03&hm=48440c7b549962df7fc578f57d405d5de42f35600fb602bdd72bb531a996cf70&" type="video/mp4">
     </video>
 
@@ -120,11 +120,29 @@
             updateIcon();
         });
 
-        // Tela de entrada: fade-out e início do áudio
+        // Tela de entrada: fade-out e início do áudio e vídeo
         function enterSite() {
             overlay.classList.add('fade-out');
+            
+            // Iniciar vídeo de fundo (funciona após interação do usuário em mobile)
+            var bgVideo = document.getElementById('bg-video');
+            bgVideo.muted = true;
+            bgVideo.loop = true;
+            var videoPlayPromise = bgVideo.play();
+            if (videoPlayPromise !== undefined) {
+                videoPlayPromise.catch(function(err) {
+                    console.log('Video play error:', err);
+                    // Se falhar, tentar novamente
+                    setTimeout(function() {
+                        bgVideo.play().catch(function() {});
+                    }, 100);
+                });
+            }
+            
+            // Iniciar áudio
             var p = audio.play();
             if (p && typeof p.catch === 'function') { p.catch(function () {}); }
+            
             var onDone = function (e) {
                 if (e && e.target !== overlay) return;
                 overlay.classList.add('hidden');
@@ -133,6 +151,16 @@
             overlay.addEventListener('transitionend', onDone);
         }
         overlay.addEventListener('click', enterSite);
+        
+        // Tentar autoplay no carregamento (pode falhar em mobile)
+        window.addEventListener('load', function() {
+            var bgVideo = document.getElementById('bg-video');
+            bgVideo.muted = true;
+            bgVideo.loop = true;
+            bgVideo.play().catch(function() {
+                // Falha silenciosa - vídeo só tocará após interação
+            });
+        });
 
         // Controles de tema e música
         (function initControls() {
@@ -221,34 +249,44 @@
                     if (source) {
                         source.src = bgVideo.src;
                         source.type = 'video/mp4';
+                    } else {
+                        // Se não existir source, criar um novo
+                        var newSource = document.createElement('source');
+                        newSource.src = bgVideo.src;
+                        newSource.type = 'video/mp4';
+                        bgVideo.appendChild(newSource);
                     }
+                    
+                    // Configurar atributos antes de carregar
+                    bgVideo.crossOrigin = 'anonymous';
+                    bgVideo.preload = 'auto';
+                    bgVideo.muted = true;
+                    bgVideo.loop = true;
                     
                     bgVideo.load();
                     
-                    // Tentar reproduzir após carregar (mantém muted e loop)
-                    bgVideo.addEventListener('loadeddata', function playVideo() {
+                    // Tentar reproduzir após carregar (garantir muted e loop)
+                    function tryPlay() {
                         bgVideo.currentTime = 0;
                         bgVideo.muted = true;
                         bgVideo.loop = true;
+                        bgVideo.setAttribute('playsinline', 'true');
+                        bgVideo.setAttribute('webkit-playsinline', 'true');
                         var playPromise = bgVideo.play();
                         if (playPromise !== undefined) {
-                            playPromise.catch(function() {
-                                // Ignora erros de autoplay
+                            playPromise.catch(function(err) {
+                                console.log('Video play error:', err);
+                                // Tentar novamente após um breve delay
+                                setTimeout(function() {
+                                    bgVideo.play().catch(function() {});
+                                }, 200);
                             });
                         }
-                        bgVideo.removeEventListener('loadeddata', playVideo);
-                    }, { once: true });
+                    }
                     
-                    // Fallback: se loadeddata não disparar, tentar depois de canplay
-                    bgVideo.addEventListener('canplay', function playVideoFallback() {
-                        if (bgVideo.paused) {
-                            var playPromise = bgVideo.play();
-                            if (playPromise !== undefined) {
-                                playPromise.catch(function() {});
-                            }
-                        }
-                        bgVideo.removeEventListener('canplay', playVideoFallback);
-                    }, { once: true });
+                    bgVideo.addEventListener('loadeddata', tryPlay, { once: true });
+                    bgVideo.addEventListener('canplay', tryPlay, { once: true });
+                    bgVideo.addEventListener('loadedmetadata', tryPlay, { once: true });
                     
                     // Trocar música padrão baseado no tema
                     var wasPlaying = !audio.paused;

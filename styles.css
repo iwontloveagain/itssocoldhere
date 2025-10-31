@@ -27,6 +27,18 @@ body {
     object-fit: cover;
     z-index: -1;
     filter: brightness(0.45);
+    /* Remover controles visuais */
+    pointer-events: none;
+    -webkit-tap-highlight-color: transparent;
+}
+#bg-video::-webkit-media-controls {
+    display: none !important;
+}
+#bg-video::-webkit-media-controls-enclosure {
+    display: none !important;
+}
+#bg-video::-webkit-media-controls-panel {
+    display: none !important;
 }
 
 /* Conteúdo centralizado */
