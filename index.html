@@ -205,16 +205,50 @@
                     
                     // Trocar vídeo de fundo baseado no tema
                     var bgVideo = document.getElementById('bg-video');
+                    var wasPlaying = !bgVideo.paused;
+                    var currentTime = bgVideo.currentTime;
+                    
                     if (theme === 's2') {
                         bgVideo.src = 'https://cdn.discordapp.com/attachments/1408996422748995704/1433737432687317052/TikDownloader.io_7519240558603193622_hd.mp4?ex=6905c789&is=69047609&hm=8ed289eb6e3f937924720d3731af146e672fd3822347cf472ffb87605c285520&';
-                        bgVideo.load();
                     } else if (theme === 'sixfeet') {
                         bgVideo.src = 'https://cdn.discordapp.com/attachments/1408996422748995704/1433738702521368576/corpserabbitt_musicaldown.com_1761328453.mp4?ex=6905c8b8&is=69047738&hm=1fc18bd60e7e037536a4affb5ef24905ff3470c41baa41424e51b5f96c0338ce&';
-                        bgVideo.load();
                     } else if (theme === 'default') {
                         bgVideo.src = 'https://cdn.discordapp.com/attachments/1233881458104598613/1433338245177020416/chrisis.mp4?ex=6904fc83&is=6903ab03&hm=48440c7b549962df7fc578f57d405d5de42f35600fb602bdd72bb531a996cf70&';
-                        bgVideo.load();
                     }
+                    
+                    // Atualizar source element e recarregar
+                    var source = bgVideo.querySelector('source');
+                    if (source) {
+                        source.src = bgVideo.src;
+                        source.type = 'video/mp4';
+                    }
+                    
+                    bgVideo.load();
+                    
+                    // Tentar reproduzir após carregar (mantém muted e loop)
+                    bgVideo.addEventListener('loadeddata', function playVideo() {
+                        bgVideo.currentTime = 0;
+                        bgVideo.muted = true;
+                        bgVideo.loop = true;
+                        var playPromise = bgVideo.play();
+                        if (playPromise !== undefined) {
+                            playPromise.catch(function() {
+                                // Ignora erros de autoplay
+                            });
+                        }
+                        bgVideo.removeEventListener('loadeddata', playVideo);
+                    }, { once: true });
+                    
+                    // Fallback: se loadeddata não disparar, tentar depois de canplay
+                    bgVideo.addEventListener('canplay', function playVideoFallback() {
+                        if (bgVideo.paused) {
+                            var playPromise = bgVideo.play();
+                            if (playPromise !== undefined) {
+                                playPromise.catch(function() {});
+                            }
+                        }
+                        bgVideo.removeEventListener('canplay', playVideoFallback);
+                    }, { once: true });
                     
                     // Trocar música padrão baseado no tema
                     var wasPlaying = !audio.paused;
