@@ -11,6 +11,9 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Debug: Log when server.js is loaded
+console.log('[Server] server.js loaded', process.env.VERCEL ? '(Vercel)' : '(Local)');
+
 // Serve static files (index.html, styles.css, etc.)
 app.use(express.static(__dirname, {
   maxAge: '1d',
@@ -40,8 +43,11 @@ app.get('/videos/:file', (req, res) => {
 // Add CORS headers for video loading
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
   next();
 });
 
@@ -223,15 +229,24 @@ app.get('/api/glow-color/:id', async (req, res) => {
 });
 
 app.post('/api/glow-color', async (req, res) => {
+  console.log('[API] POST /api/glow-color - Request received');
+  console.log('[API] Body:', req.body);
   const { userId, color } = req.body || {};
   if (!userId || !color) {
+    console.log('[API] Missing userId or color');
     return res.status(400).json({ error: 'Missing userId or color' });
   }
-  const all = await readGlowColors();
-  const userIdStr = String(userId);
-  all[userIdStr] = String(color).slice(0, 20);
-  await writeGlowColors(all);
-  res.json({ ok: true, color: all[userIdStr] });
+  try {
+    const all = await readGlowColors();
+    const userIdStr = String(userId);
+    all[userIdStr] = String(color).slice(0, 20);
+    await writeGlowColors(all);
+    console.log('[API] Glow color updated successfully');
+    res.json({ ok: true, color: all[userIdStr] });
+  } catch (error) {
+    console.error('[API] Error updating glow color:', error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
 });
 
 app.post('/api/social-links', async (req, res) => {
@@ -270,6 +285,7 @@ const SOCIAL_ICON_MAP = {
 };
 
 // Exportar app para Vercel (serverless)
+// @vercel/node espera uma função handler ou o app do Express
 export default app;
 
 // Iniciar servidor localmente

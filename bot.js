@@ -40,18 +40,30 @@ client.once('ready', () => {
 async function apiRequest(endpoint, method = 'GET', body = null) {
   try {
     const url = `${VERCEL_URL}${endpoint}`;
+    console.log(`[API] ${method} ${url}`);
     const options = {
       method,
       headers: { 'Content-Type': 'application/json' }
     };
     if (body) {
       options.body = JSON.stringify(body);
+      console.log(`[API] Body:`, body);
     }
     const res = await fetch(url, options);
-    return await res.json();
+    console.log(`[API] Status: ${res.status} ${res.statusText}`);
+    
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error(`[API] Erro HTTP ${res.status}:`, errorText);
+      return { ok: false, error: `HTTP ${res.status}: ${errorText}` };
+    }
+    
+    const data = await res.json();
+    console.log(`[API] Resposta:`, data);
+    return data;
   } catch (error) {
-    console.error(`Erro na requisição para ${endpoint}:`, error.message);
-    return null;
+    console.error(`[API] Erro na requisição para ${endpoint}:`, error.message);
+    return { ok: false, error: error.message };
   }
 }
 
@@ -130,7 +142,9 @@ client.on('messageCreate', async (message) => {
 
         await message.reply(`cor do glow alterada para **${colorHex}** no perfil de **${userName}**`);
       } else {
-        await message.reply('❌ Erro ao atualizar cor. Verifique se o site está online.');
+        const errorMsg = result?.error || 'Erro desconhecido';
+        console.error(`[Bot] Falha ao atualizar cor:`, errorMsg);
+        await message.reply(`❌ Erro ao atualizar cor: ${errorMsg}\nVerifique se o site está online e a URL do Vercel está correta no bot.js`);
       }
     } catch (e) {
       console.error('Error updating glow color:', e);
@@ -186,7 +200,9 @@ client.on('messageCreate', async (message) => {
         await message.reply(`url do ${platformName} adicionada ao perfil de **${userName}**`);
       }
     } else {
-      await message.reply('❌ Erro ao atualizar link. Verifique se o site está online.');
+      const errorMsg = result?.error || 'Erro desconhecido';
+      console.error(`[Bot] Falha ao atualizar link:`, errorMsg);
+      await message.reply(`❌ Erro ao atualizar link: ${errorMsg}\nVerifique se o site está online e a URL do Vercel está correta no bot.js`);
     }
   } catch (e) {
     console.error('Error updating social link:', e);
