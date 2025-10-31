@@ -12,11 +12,26 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Serve static files (index.html, styles.css, etc.)
-app.use(express.static(__dirname));
+app.use(express.static(__dirname, {
+  maxAge: '1d',
+  etag: true
+}));
 app.use(express.json({ limit: '200kb' }));
 
-// Serve index.html for root route
+// Serve CSS explicitly (before API routes to avoid conflicts)
+app.get('/styles.css', (req, res) => {
+  res.setHeader('Content-Type', 'text/css');
+  res.sendFile(path.join(__dirname, 'styles.css'));
+});
+
+// Serve audio files (before API routes)
+app.get('/songs/:file', (req, res) => {
+  res.sendFile(path.join(__dirname, 'songs', req.params.file));
+});
+
+// Serve index.html for root route (must be after static files)
 app.get('/', (req, res) => {
+  res.setHeader('Content-Type', 'text/html');
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
