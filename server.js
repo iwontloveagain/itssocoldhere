@@ -21,12 +21,20 @@ app.use(express.json({ limit: '200kb' }));
 // Serve CSS explicitly (before API routes to avoid conflicts)
 app.get('/styles.css', (req, res) => {
   res.setHeader('Content-Type', 'text/css');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   res.sendFile(path.join(__dirname, 'styles.css'));
 });
 
 // Serve audio files (before API routes)
 app.get('/songs/:file', (req, res) => {
   res.sendFile(path.join(__dirname, 'songs', req.params.file));
+});
+
+// Serve video files (before API routes)
+app.get('/videos/:file', (req, res) => {
+  res.sendFile(path.join(__dirname, 'videos', req.params.file));
 });
 
 // Add CORS headers for video loading
@@ -40,6 +48,9 @@ app.use((req, res, next) => {
 // Serve index.html for root route (must be after static files)
 app.get('/', (req, res) => {
   res.setHeader('Content-Type', 'text/html');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 

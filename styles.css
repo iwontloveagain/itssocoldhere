@@ -438,32 +438,6 @@ body[data-theme="sixfeet"] {
 
 /* Media Queries para Mobile */
 @media (max-width: 768px) {
-    /* Esconder vídeo no mobile */
-    #bg-video {
-        display: none;
-    }
-    
-    /* Imagem de fundo fixa para mobile */
-    body::before {
-        content: '';
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-image: url('https://cdn.discordapp.com/attachments/1408996422748995704/1433763746555232316/download_11.jpg?ex=6905e00b&is=69048e8b&hm=6b9afa29153fea699592a8dfbbc6cffe042da964c00ac56dfdbd282aa6f7d2dc&');
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-        z-index: -2;
-        filter: brightness(0.45);
-    }
-    
-    /* Esconder controle de tema no mobile */
-    .control-box:first-child {
-        display: none;
-    }
-    
     /* Ajustar padding do conteúdo */
     .content {
         padding: 1rem;
@@ -579,11 +553,6 @@ body[data-theme="sixfeet"] {
 
 /* Media Queries para Mobile Pequeno */
 @media (max-width: 480px) {
-    /* Garantir que vídeo está escondido e imagem está visível */
-    #bg-video {
-        display: none;
-    }
-    
     .content {
         padding: 0.75rem;
     }

@@ -1,0 +1,15 @@
+# Comandos para conectar e enviar ao GitHub:
+
+# 1. Adicionar o repositório remoto (SUBSTITUA pela URL do seu repositório):
+git remote add origin https://github.com/SEU-USUARIO/SEU-REPOSITORIO.git
+
+# 2. Renomear branch para main:
+git branch -M main
+
+# 3. Enviar tudo para o GitHub:
+git push -u origin main
+
+# Se pedir autenticação:
+# - Use Personal Access Token (não a senha)
+# - Ou use GitHub Desktop
+

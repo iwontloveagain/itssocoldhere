@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Site com Vídeo de Fundo</title>
-    <link rel="stylesheet" href="/styles.css">
-    <link rel="preload" as="video" href="https://cdn.discordapp.com/attachments/1233881458104598613/1433338245177020416/chrisis.mp4?ex=6904fc83&is=6903ab03&hm=48440c7b549962df7fc578f57d405d5de42f35600fb602bdd72bb531a996cf70&">
+    <link rel="stylesheet" href="/styles.css?v=1.0.1">
+    <link rel="preload" as="video" href="/videos/padrao.mp4">
 </head>
 <body>
-    <video id="bg-video" autoplay muted loop playsinline preload="auto" crossorigin="anonymous">
-        <source src="https://cdn.discordapp.com/attachments/1233881458104598613/1433338245177020416/chrisis.mp4?ex=6904fc83&is=6903ab03&hm=48440c7b549962df7fc578f57d405d5de42f35600fb602bdd72bb531a996cf70&" type="video/mp4">
+    <video id="bg-video" autoplay muted loop playsinline preload="auto">
+        <source src="/videos/padrao.mp4" type="video/mp4">
     </video>
 
     <div class="volume-control" aria-label="Controle de volume da música">
@@ -208,13 +208,17 @@
                     var wasPlaying = !bgVideo.paused;
                     var currentTime = bgVideo.currentTime;
                     
+                    var videoUrl = '';
                     if (theme === 's2') {
-                        bgVideo.src = 'https://cdn.discordapp.com/attachments/1408996422748995704/1433737432687317052/TikDownloader.io_7519240558603193622_hd.mp4?ex=6905c789&is=69047609&hm=8ed289eb6e3f937924720d3731af146e672fd3822347cf472ffb87605c285520&';
+                        videoUrl = '/videos/s2.mp4';
                     } else if (theme === 'sixfeet') {
-                        bgVideo.src = 'https://cdn.discordapp.com/attachments/1408996422748995704/1433738702521368576/corpserabbitt_musicaldown.com_1761328453.mp4?ex=6905c8b8&is=69047738&hm=1fc18bd60e7e037536a4affb5ef24905ff3470c41baa41424e51b5f96c0338ce&';
+                        videoUrl = '/videos/sixfeet.mp4';
                     } else if (theme === 'default') {
-                        bgVideo.src = 'https://cdn.discordapp.com/attachments/1233881458104598613/1433338245177020416/chrisis.mp4?ex=6904fc83&is=6903ab03&hm=48440c7b549962df7fc578f57d405d5de42f35600fb602bdd72bb531a996cf70&';
+                        videoUrl = '/videos/padrao.mp4';
                     }
+                    
+                    console.log('Switching to theme:', theme, 'Video URL:', videoUrl);
+                    bgVideo.src = videoUrl;
                     
                     // Atualizar source element e recarregar
                     var source = bgVideo.querySelector('source');
@@ -230,27 +234,45 @@
                     }
                     
                     // Configurar atributos antes de carregar
-                    bgVideo.crossOrigin = 'anonymous';
-                    bgVideo.preload = 'auto';
                     bgVideo.muted = true;
                     bgVideo.loop = true;
+                    bgVideo.autoplay = true;
+                    
+                    // Remover crossOrigin que pode bloquear vídeos do Discord
+                    bgVideo.removeAttribute('crossorigin');
                     
                     bgVideo.load();
                     
                     // Tentar reproduzir após carregar
                     function tryPlay() {
+                        console.log('Attempting to play video, readyState:', bgVideo.readyState);
                         bgVideo.currentTime = 0;
                         var playPromise = bgVideo.play();
                         if (playPromise !== undefined) {
-                            playPromise.catch(function(err) {
+                            playPromise.then(function() {
+                                console.log('Video playing successfully');
+                            }).catch(function(err) {
                                 console.log('Video play error:', err);
                             });
                         }
                     }
                     
+                    // Log de erros no vídeo
+                    bgVideo.addEventListener('error', function(e) {
+                        console.error('Video error:', bgVideo.error, bgVideo.error ? bgVideo.error.message : 'Unknown error');
+                    }, { once: true });
+                    
+                    // Adicionar listeners com timeout como fallback
                     bgVideo.addEventListener('loadeddata', tryPlay, { once: true });
                     bgVideo.addEventListener('canplay', tryPlay, { once: true });
                     bgVideo.addEventListener('loadedmetadata', tryPlay, { once: true });
+                    
+                    // Fallback: tentar depois de 500ms se não carregou
+                    setTimeout(function() {
+                        if (bgVideo.readyState < 2) { // Se ainda não carregou dados suficientes
+                            tryPlay();
+                        }
+                    }, 500);
                     
                     // Trocar música padrão baseado no tema
                     var wasPlaying = !audio.paused;

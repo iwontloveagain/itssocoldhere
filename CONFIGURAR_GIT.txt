@@ -1,0 +1,10 @@
+# Configure o Git com seu nome e email:
+
+git config --global user.name "Seu Nome"
+git config --global user.email "seu-email@exemplo.com"
+
+# Depois execute novamente:
+git commit -m "Initial commit"
+
+# IMPORTANTE: Use o mesmo email que você usa no GitHub (ou um email verificado)
+
