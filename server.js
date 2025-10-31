@@ -222,18 +222,35 @@ app.get('/api/glow-color/:id', async (req, res) => {
   res.json({ color });
 });
 
+app.post('/api/glow-color', async (req, res) => {
+  const { userId, color } = req.body || {};
+  if (!userId || !color) {
+    return res.status(400).json({ error: 'Missing userId or color' });
+  }
+  const all = await readGlowColors();
+  const userIdStr = String(userId);
+  all[userIdStr] = String(color).slice(0, 20);
+  await writeGlowColors(all);
+  res.json({ ok: true, color: all[userIdStr] });
+});
+
 app.post('/api/social-links', async (req, res) => {
   const { userId, platform, href } = req.body || {};
-  if (!userId || !platform || !href) {
-    return res.status(400).json({ error: 'Missing userId, platform or href' });
+  if (!userId || !platform) {
+    return res.status(400).json({ error: 'Missing userId or platform' });
   }
   const all = await readSocialLinks();
   const userIdStr = String(userId);
   if (!Array.isArray(all[userIdStr])) all[userIdStr] = [];
+  
   // Remove existing link for this platform
   all[userIdStr] = all[userIdStr].filter(l => l.platform !== platform);
-  // Add new link
-  all[userIdStr].push({ platform, href: String(href).slice(0, 500), at: new Date().toISOString() });
+  
+  // Se href foi fornecido, adiciona o link. Se não, apenas remove (feito acima)
+  if (href && (href.startsWith('http://') || href.startsWith('https://'))) {
+    all[userIdStr].push({ platform, href: String(href).slice(0, 500), at: new Date().toISOString() });
+  }
+  
   await writeSocialLinks(all);
   res.json({ ok: true });
 });
@@ -262,11 +279,21 @@ if (!process.env.VERCEL && !process.env.RENDER) {
     console.log(`Server running on http://localhost:${PORT}`);
     startDiscordBot();
   });
-} else {
-  // No Vercel/Render, iniciar bot Discord após um delay
+} else if (process.env.RENDER) {
+  // No Render, iniciar bot normalmente após delay
   setTimeout(() => {
     startDiscordBot();
   }, 2000);
+} else if (process.env.VERCEL) {
+  // No Vercel (serverless), tentar iniciar bot mas pode não funcionar bem
+  // Vercel não mantém processos contínuos, então o bot pode desconectar
+  console.log('Running on Vercel - Discord bot may not work reliably due to serverless limitations');
+  setTimeout(() => {
+    startDiscordBot().catch(err => {
+      console.error('Bot failed to start on Vercel:', err.message);
+      console.log('Consider using Render or Railway for Discord bot support');
+    });
+  }, 1000);
 }
 
 // Discord Bot
@@ -435,8 +462,13 @@ async function startDiscordBot() {
 
   try {
     await client.login(botToken);
+    console.log('Discord bot login initiated');
   } catch (e) {
     console.error('Failed to login Discord bot:', e.message);
+    if (process.env.VERCEL) {
+      console.log('Note: Discord bots require persistent connections and may not work on Vercel serverless');
+      console.log('Consider deploying the bot separately on Render (https://render.com) or Railway (https://railway.app)');
+    }
   }
 }
 
