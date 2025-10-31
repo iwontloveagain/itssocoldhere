@@ -120,53 +120,11 @@
             updateIcon();
         });
 
-        // Função para iniciar vídeo (garante que sempre funcione)
-        function startVideo() {
-            var bgVideo = document.getElementById('bg-video');
-            if (!bgVideo) return;
-            
-            // Configurar vídeo
-            bgVideo.muted = true;
-            bgVideo.loop = true;
-            bgVideo.autoplay = true;
-            bgVideo.setAttribute('playsinline', 'true');
-            bgVideo.setAttribute('webkit-playsinline', 'true');
-            bgVideo.setAttribute('preload', 'auto');
-            
-            // Tentar reproduzir imediatamente
-            var playPromise = bgVideo.play();
-            if (playPromise !== undefined) {
-                playPromise.then(function() {
-                    // Vídeo está tocando
-                }).catch(function(err) {
-                    // Se falhar, tentar várias vezes
-                    setTimeout(function() {
-                        bgVideo.play().catch(function() {
-                            setTimeout(function() {
-                                bgVideo.play().catch(function() {});
-                            }, 500);
-                        });
-                    }, 100);
-                });
-            } else {
-                // Fallback se play() não retornar promise
-                setTimeout(function() {
-                    bgVideo.play().catch(function() {});
-                }, 100);
-            }
-        }
-        
-        // Tela de entrada: fade-out e início do áudio e vídeo
+        // Tela de entrada: fade-out e início do áudio
         function enterSite() {
             overlay.classList.add('fade-out');
-            
-            // Iniciar vídeo de fundo após interação (sempre funciona)
-            startVideo();
-            
-            // Iniciar áudio
             var p = audio.play();
             if (p && typeof p.catch === 'function') { p.catch(function () {}); }
-            
             var onDone = function (e) {
                 if (e && e.target !== overlay) return;
                 overlay.classList.add('hidden');
@@ -175,20 +133,6 @@
             overlay.addEventListener('transitionend', onDone);
         }
         overlay.addEventListener('click', enterSite);
-        
-        // Tentar autoplay no carregamento (pode funcionar no PC)
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', function() {
-                setTimeout(startVideo, 100);
-            });
-        } else {
-            setTimeout(startVideo, 100);
-        }
-        
-        // Também tentar no window.load
-        window.addEventListener('load', function() {
-            setTimeout(startVideo, 200);
-        });
 
         // Controles de tema e música
         (function initControls() {
@@ -261,73 +205,16 @@
                     
                     // Trocar vídeo de fundo baseado no tema
                     var bgVideo = document.getElementById('bg-video');
-                    var wasPlaying = !bgVideo.paused;
-                    var currentTime = bgVideo.currentTime;
-                    
                     if (theme === 's2') {
                         bgVideo.src = 'https://cdn.discordapp.com/attachments/1408996422748995704/1433737432687317052/TikDownloader.io_7519240558603193622_hd.mp4?ex=6905c789&is=69047609&hm=8ed289eb6e3f937924720d3731af146e672fd3822347cf472ffb87605c285520&';
+                        bgVideo.load();
                     } else if (theme === 'sixfeet') {
                         bgVideo.src = 'https://cdn.discordapp.com/attachments/1408996422748995704/1433738702521368576/corpserabbitt_musicaldown.com_1761328453.mp4?ex=6905c8b8&is=69047738&hm=1fc18bd60e7e037536a4affb5ef24905ff3470c41baa41424e51b5f96c0338ce&';
+                        bgVideo.load();
                     } else if (theme === 'default') {
                         bgVideo.src = 'https://cdn.discordapp.com/attachments/1233881458104598613/1433338245177020416/chrisis.mp4?ex=6904fc83&is=6903ab03&hm=48440c7b549962df7fc578f57d405d5de42f35600fb602bdd72bb531a996cf70&';
+                        bgVideo.load();
                     }
-                    
-                    // Atualizar source element e recarregar
-                    var source = bgVideo.querySelector('source');
-                    if (source) {
-                        source.src = bgVideo.src;
-                        source.type = 'video/mp4';
-                    } else {
-                        // Se não existir source, criar um novo
-                        var newSource = document.createElement('source');
-                        newSource.src = bgVideo.src;
-                        newSource.type = 'video/mp4';
-                        bgVideo.appendChild(newSource);
-                    }
-                    
-                    // Configurar atributos antes de carregar
-                    bgVideo.crossOrigin = 'anonymous';
-                    bgVideo.preload = 'auto';
-                    bgVideo.muted = true;
-                    bgVideo.loop = true;
-                    bgVideo.autoplay = true;
-                    bgVideo.setAttribute('playsinline', 'true');
-                    bgVideo.setAttribute('webkit-playsinline', 'true');
-                    
-                    bgVideo.load();
-                    
-                    // Função para tentar reproduzir
-                    function tryPlay() {
-                        bgVideo.currentTime = 0;
-                        bgVideo.muted = true;
-                        bgVideo.loop = true;
-                        bgVideo.autoplay = true;
-                        var playPromise = bgVideo.play();
-                        if (playPromise !== undefined) {
-                            playPromise.then(function() {
-                                // Sucesso - vídeo está tocando
-                            }).catch(function(err) {
-                                // Se falhar, tentar novamente
-                                setTimeout(function() {
-                                    bgVideo.play().catch(function() {
-                                        // Última tentativa
-                                        setTimeout(function() {
-                                            bgVideo.play().catch(function() {});
-                                        }, 500);
-                                    });
-                                }, 300);
-                            });
-                        }
-                    }
-                    
-                    // Múltiplos eventos para garantir reprodução
-                    bgVideo.addEventListener('loadeddata', tryPlay, { once: true });
-                    bgVideo.addEventListener('canplay', tryPlay, { once: true });
-                    bgVideo.addEventListener('canplaythrough', tryPlay, { once: true });
-                    bgVideo.addEventListener('loadedmetadata', tryPlay, { once: true });
-                    
-                    // Garantir que toque mesmo se eventos falharem
-                    setTimeout(tryPlay, 500);
                     
                     // Trocar música padrão baseado no tema
                     var wasPlaying = !audio.paused;
