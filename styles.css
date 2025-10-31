@@ -1,0 +1,623 @@
+/* Layout básico */
+* { box-sizing: border-box; }
+html, body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* Garante que nunca apareça scrollbar */
+    position: fixed; /* Previne qualquer scroll */
+}
+body {
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+    color: #fff;
+    background: #000;
+}
+
+/* Vídeo de fundo em tela cheia */
+#bg-video {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    transform: translate(-50%, -50%);
+    object-fit: cover;
+    z-index: -1;
+    filter: brightness(0.45);
+}
+
+/* Conteúdo centralizado */
+.content {
+    position: relative;
+    height: 100vh;
+    width: 100vw;
+    max-height: 100vh;
+    max-width: 100vw;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    padding: 2rem;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+.content h1 {
+    margin: 0 0 0.5rem 0;
+    font-size: clamp(2rem, 4vw, 3rem);
+}
+.content p { max-width: 60ch; margin: 0.25rem 0 1.5rem; }
+
+/* Controles no topo */
+.volume-control {
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0;
+    background: transparent;
+    border: 0;
+}
+.top-controls {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    z-index: 5;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+.control-box {
+    position: relative;
+}
+.control-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: rgba(0,0,0,0.45);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    transition: background 180ms ease, border-color 180ms ease;
+}
+.control-toggle:hover {
+    background: rgba(0,0,0,0.55);
+    border-color: rgba(255,255,255,0.22);
+}
+.control-toggle.active {
+    background: rgba(0,0,0,0.65);
+    border-color: rgba(255,255,255,0.25);
+}
+.dropdown-arrow {
+    transition: transform 180ms ease;
+}
+.control-toggle.active .dropdown-arrow {
+    transform: rotate(180deg);
+}
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    min-width: 160px;
+    background: rgba(0,0,0,0.65);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px;
+    padding: 6px 0;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px);
+    transition: opacity 200ms ease, visibility 200ms ease, transform 200ms ease;
+    z-index: 10;
+}
+.control-box.active .dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+.dropdown-item {
+    display: block;
+    width: 100%;
+    padding: 8px 14px;
+    background: transparent;
+    border: 0;
+    color: rgba(255,255,255,0.9);
+    font-size: 0.88rem;
+    text-align: left;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 150ms ease, color 150ms ease;
+}
+.dropdown-item:hover {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+}
+
+/* Temas - placeholders por enquanto (sem efeitos) */
+body[data-theme="default"] {
+    /* Tema padrão - placeholder */
+}
+body[data-theme="s2"] {
+    /* Tema s2 - placeholder */
+}
+body[data-theme="sixfeet"] {
+    /* Tema sixfeet - placeholder */
+}
+
+.volume-toggle {
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    background: transparent;
+    border: 0;
+    color: #fff;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    border-radius: 8px;
+}
+.volume-toggle svg { width: 28px; height: 28px; }
+.volume-toggle:hover {
+    text-shadow: 0 0 8px rgba(255,255,255,0.25);
+}
+.slider {
+    width: 0;
+    height: 36px; /* garante espaço p/ o thumb */
+    display: flex;
+    align-items: center; /* alinha a barra ao centro vertical */
+    overflow: hidden;
+    transition: width 180ms ease;
+}
+.volume-control:hover .slider {
+    width: 180px;
+}
+.volume-control input[type="range"] {
+    width: 180px;
+    height: 44px; /* aumenta área de toque em mobile */
+    min-height: 44px; /* garante área de toque adequada */
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    touch-action: manipulation;
+}
+/* WebKit */
+.volume-control input[type="range"]::-webkit-slider-runnable-track {
+    height: 4px;
+    background: rgba(255,255,255,0.6);
+    border-radius: 999px;
+    box-shadow: 0 0 8px rgba(255,255,255,0.2);
+}
+.volume-control input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    margin-top: -6px; /* centra o thumb na trilha de 4px */
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 10px rgba(255,255,255,0.35);
+}
+/* Firefox */
+.volume-control input[type="range"]::-moz-range-track {
+    height: 4px;
+    background: rgba(255,255,255,0.6);
+    border-radius: 999px;
+    box-shadow: 0 0 8px rgba(255,255,255,0.2);
+}
+.volume-control input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border: 0;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 10px rgba(255,255,255,0.35);
+}
+/* Edge/IE */
+.volume-control input[type="range"]::-ms-track {
+    height: 4px;
+    background: transparent;
+    border-color: transparent;
+    color: transparent;
+}
+.volume-control input[type="range"]::-ms-fill-lower,
+.volume-control input[type="range"]::-ms-fill-upper {
+    background: rgba(255,255,255,0.6);
+    border-radius: 999px;
+    box-shadow: 0 0 8px rgba(255,255,255,0.2);
+}
+.volume-control input[type="range"]::-ms-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 10px rgba(255,255,255,0.35);
+}
+
+/* Botão mostrado caso o autoplay seja bloqueado */
+.autoplay-btn {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 6;
+    padding: 12px 18px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+}
+.autoplay-btn:hover { background: rgba(0,0,0,0.7); }
+
+/* Overlay de entrada */
+.intro-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: grid;
+    place-items: center;
+    background: rgba(0,0,0,0.78); /* ainda mais escuro */
+    backdrop-filter: blur(10px); /* mais embacado */
+    -webkit-backdrop-filter: blur(10px);
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    opacity: 1;
+    transition: opacity 1500ms cubic-bezier(.2,.6,.2,1),
+                backdrop-filter 300ms cubic-bezier(.2,.6,.2,1);
+}
+.intro-overlay span {
+    color: #fff;
+    font-size: clamp(1.8rem, 6vw, 3rem);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-shadow: 0 0 12px rgba(255,255,255,0.25);
+    transition: transform 300ms cubic-bezier(.2,.6,.2,1),
+                text-shadow 300ms cubic-bezier(.2,.6,.2,1),
+                opacity 300ms cubic-bezier(.2,.6,.2,1);
+    transform: scale(1);
+    will-change: transform;
+}
+.intro-overlay span:hover { transform: scale(1.08); text-shadow: 0 0 16px rgba(255,255,255,0.33); }
+.intro-overlay span:active { transform: scale(1.02); }
+
+@media (prefers-reduced-motion: reduce) {
+    .intro-overlay span { transition: none; }
+}
+.intro-overlay.fade-out { opacity: 0; pointer-events: none; }
+.intro-overlay.fade-out span { opacity: 0; transform: scale(0.98); text-shadow: 0 0 0 rgba(0,0,0,0); }
+.intro-overlay.hidden { display: none; }
+
+/* Profiles */
+.profiles {
+    width: 100%;
+    max-width: 560px; /* mantém os perfis próximos */
+    max-height: calc(100vh - 4rem); /* nunca excede a altura da viewport menos padding */
+    margin: 0 auto;
+    display: grid;
+    grid-auto-flow: row;
+    grid-template-columns: repeat(2, minmax(160px, 1fr));
+    gap: 16px; /* espaçamento menor */
+    align-items: start;
+    justify-items: center;
+    overflow: visible;
+    box-sizing: border-box;
+}
+/* Centraliza cada 3º item para formar 2-1-2-1 ... */
+.profiles > .profile-card:nth-child(3n) {
+    grid-column: 1 / -1;
+    justify-self: center;
+}
+.profile-card {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
+    transform: translateZ(0) scale(1);
+    transition: transform 200ms ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: center;
+    width: 100%;
+    overflow: visible;
+}
+.profile-card:hover { transform: none; }
+.profile-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    transition: transform 180ms ease;
+    will-change: transform;
+    width: 100%;
+    overflow: visible;
+}
+/* Hover no perfil apenas quando passa sobre foto, nome ou @, NÃO nos ícones sociais */
+.profile-inner:has(.avatar-wrap:hover),
+.profile-inner:has(.profile-name:hover),
+.profile-inner:has(.profile-tag:hover) { transform: scale(1.04); }
+/* Desativa hover do perfil quando passa sobre ícones sociais */
+.profile-inner:has(.profile-socials:hover) { transform: none; }
+.avatar-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 150px;
+    height: 150px;
+    flex-shrink: 0;
+    z-index: 0;
+    overflow: visible;
+}
+.avatar {
+    width: 128px;
+    height: 128px;
+    border-radius: 999px;
+    transition: transform 160ms ease;
+}
+.avatar-decoration {
+    position: absolute;
+    top: 0;
+    width: 128px;
+    height: 128px;
+    pointer-events: none;
+}
+.profile-name {
+    margin: 10px 0 2px;
+    color: #ffffff;
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-shadow: 0 0 8px rgba(255,255,255,0.28), 0 0 16px rgba(255,255,255,0.18);
+    transition: transform 160ms ease, text-shadow 200ms ease;
+    text-align: center;
+    width: 100%;
+}
+/* Hover em grupo fica limpo via wrapper */
+.profile-tag {
+    margin: 8px 0 0 0;
+    color: rgba(255,255,255,0.96);
+    font-size: 0.95rem;
+    text-shadow: 0 0 7px rgba(255,255,255,0.24), 0 0 14px rgba(255,255,255,0.14);
+    transition: transform 160ms ease, text-shadow 200ms ease;
+    text-align: center;
+    width: 100%;
+}
+.profile-actions { height: 24px; }
+
+/* Social buttons (saved for future use) */
+.profile-socials {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+    margin-top: 8px;
+    padding: 6px 4px;
+    overflow: visible;
+    width: 100%;
+}
+.social-btn {
+    display: block;
+    text-decoration: none;
+    width: var(--icon-size, 32px);
+    height: var(--icon-size, 32px);
+    position: relative;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    overflow: visible;
+}
+.social-btn img {
+    width: var(--icon-size, 32px);
+    height: var(--icon-size, 32px);
+    display: block;
+    transition: transform 160ms ease;
+    overflow: visible;
+}
+.social-btn:hover img { transform: scale(1.08); }
+
+/* Media Queries para Mobile */
+@media (max-width: 768px) {
+    /* Ajustar padding do conteúdo */
+    .content {
+        padding: 1rem;
+    }
+
+    /* Controles de volume menores */
+    .volume-control {
+        top: 8px;
+        left: 8px;
+        gap: 8px;
+    }
+    .volume-toggle {
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+        min-height: 40px;
+    }
+    .volume-toggle svg {
+        width: 24px;
+        height: 24px;
+    }
+    .volume-control:hover .slider {
+        width: 140px;
+    }
+    .slider {
+        height: 44px;
+    }
+    .volume-control input[type="range"] {
+        width: 140px;
+        height: 44px;
+        min-height: 44px;
+    }
+
+    /* Controles superiores ajustados */
+    .top-controls {
+        top: 8px;
+        right: 8px;
+        gap: 6px;
+        flex-direction: column;
+    }
+    .control-toggle {
+        padding: 8px 12px;
+        min-height: 40px;
+        font-size: 0.8rem;
+        gap: 4px;
+    }
+    .control-toggle span {
+        font-size: 0.75rem;
+    }
+    .dropdown-arrow {
+        width: 14px;
+        height: 14px;
+    }
+    .dropdown-menu {
+        min-width: 140px;
+        font-size: 0.85rem;
+    }
+    .dropdown-item {
+        padding: 10px 14px;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        font-size: 0.8rem;
+    }
+
+    /* Perfis - 1 coluna em mobile */
+    .profiles {
+        max-width: 100%;
+        grid-template-columns: 1fr;
+        gap: 20px;
+        padding: 0.5rem;
+    }
+    /* Remove o padrão 2-1-2-1 em mobile, todos centralizados */
+    .profiles > .profile-card:nth-child(3n) {
+        grid-column: 1;
+    }
+
+    /* Avatares menores em mobile */
+    .avatar-wrap {
+        width: 120px;
+        height: 120px;
+    }
+    .avatar {
+        width: 100px;
+        height: 100px;
+    }
+    .avatar-decoration {
+        width: 100px;
+        height: 100px;
+    }
+
+    /* Nome e tag ajustados */
+    .profile-name {
+        font-size: 1rem;
+        margin: 8px 0 2px;
+    }
+    .profile-tag {
+        font-size: 0.85rem;
+        margin: 6px 0 0;
+    }
+
+    /* Ícones sociais menores */
+    .profile-socials {
+        gap: 6px;
+        margin-top: 6px;
+    }
+
+    /* Overlay de entrada */
+    .intro-overlay span {
+        font-size: clamp(1.5rem, 8vw, 2.5rem);
+    }
+}
+
+/* Media Queries para Mobile Pequeno */
+@media (max-width: 480px) {
+    .content {
+        padding: 0.75rem;
+    }
+
+    .volume-control {
+        top: 6px;
+        left: 6px;
+    }
+    .volume-toggle {
+        width: 38px;
+        height: 38px;
+        min-width: 38px;
+        min-height: 38px;
+    }
+    .volume-control:hover .slider {
+        width: 120px;
+    }
+    .slider {
+        height: 44px;
+    }
+    .volume-control input[type="range"] {
+        width: 120px;
+        height: 44px;
+        min-height: 44px;
+    }
+
+    .top-controls {
+        top: 6px;
+        right: 6px;
+        gap: 4px;
+    }
+    .control-toggle {
+        padding: 7px 10px;
+        min-height: 38px;
+        font-size: 0.75rem;
+    }
+    .control-toggle span {
+        font-size: 0.7rem;
+    }
+
+    .profiles {
+        gap: 16px;
+        padding: 0.25rem;
+    }
+
+    .avatar-wrap {
+        width: 100px;
+        height: 100px;
+    }
+    .avatar {
+        width: 85px;
+        height: 85px;
+    }
+    .avatar-decoration {
+        width: 85px;
+        height: 85px;
+    }
+
+    .profile-name {
+        font-size: 0.9rem;
+    }
+    .profile-tag {
+        font-size: 0.75rem;
+    }
+
+    .profile-socials {
+        gap: 4px;
+    }
+}
+

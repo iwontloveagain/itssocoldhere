@@ -1,0 +1,15 @@
+# Execute estes comandos UM POR VEZ (pressione Enter após cada um):
+
+git init
+
+git add .
+
+git commit -m "Initial commit"
+
+# Depois, adicione o repositório remoto (substitua pela URL do seu repositório):
+git remote add origin https://github.com/SEU-USUARIO/SEU-REPOSITORIO.git
+
+git branch -M main
+
+git push -u origin main
+

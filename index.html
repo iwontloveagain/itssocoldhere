@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Site com Vídeo de Fundo</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preload" as="video" href="https://cdn.discordapp.com/attachments/1233881458104598613/1433338245177020416/chrisis.mp4?ex=6904fc83&is=6903ab03&hm=48440c7b549962df7fc578f57d405d5de42f35600fb602bdd72bb531a996cf70&">
+</head>
+<body>
+    <video id="bg-video" autoplay muted loop playsinline>
+        <source src="https://cdn.discordapp.com/attachments/1233881458104598613/1433338245177020416/chrisis.mp4?ex=6904fc83&is=6903ab03&hm=48440c7b549962df7fc578f57d405d5de42f35600fb602bdd72bb531a996cf70&" type="video/mp4">
+    </video>
+
+    <div class="volume-control" aria-label="Controle de volume da música">
+        <button id="volume-toggle" class="volume-toggle" type="button" aria-label="Mutar ou desmutar">
+            <!-- Ícone inicia como alto -->
+            <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+                <path d="M4 9v6h3l5 4V5L7 9H4z" fill="currentColor"></path>
+                <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v8.06c1.48-.74 2.5-2.26 2.5-4.03z" fill="currentColor" opacity=".6"></path>
+                <path d="M14 3.23v2.06c2.89 1 5 3.77 5 6.71s-2.11 5.71-5 6.71v2.06c4.01-1.1 7-4.89 7-8.77s-2.99-7.67-7-8.77z" fill="currentColor" opacity=".35"></path>
+            </svg>
+        </button>
+        <div class="slider">
+            <input id="volume" type="range" min="0" max="1" step="0.01" value="0.17" aria-label="Volume">
+        </div>
+    </div>
+
+    <audio id="bg-audio" src="songs/where.mp3" preload="auto"></audio>
+
+    <!-- Controles de tema e música -->
+    <div class="top-controls">
+        <div class="control-box">
+            <button class="control-toggle" id="theme-toggle" type="button">
+                <span id="current-theme">Padrão</span>
+                <svg class="dropdown-arrow" viewBox="0 0 24 24" width="16" height="16">
+                    <path d="M7 10l5 5 5-5z" fill="currentColor"/>
+                </svg>
+            </button>
+            <div class="dropdown-menu" id="theme-dropdown">
+                <button class="dropdown-item" data-theme="default">Padrão</button>
+                <button class="dropdown-item" data-theme="s2">s2</button>
+                <button class="dropdown-item" data-theme="sixfeet">sixfeet</button>
+            </div>
+        </div>
+        <div class="control-box">
+            <button class="control-toggle" id="music-toggle" type="button">
+                <span id="current-music">where.mp3</span>
+                <svg class="dropdown-arrow" viewBox="0 0 24 24" width="16" height="16">
+                    <path d="M7 10l5 5 5-5z" fill="currentColor"/>
+                </svg>
+            </button>
+            <div class="dropdown-menu" id="music-dropdown">
+                <button class="dropdown-item" data-music="where.mp3">where.mp3</button>
+                <button class="dropdown-item" data-music="talksum.mp3">talksum.mp3</button>
+                <button class="dropdown-item" data-music="six.mp3">six.mp3</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tela de entrada -->
+    <div id="intro-overlay" class="intro-overlay" role="button" aria-label="Entrar no site">
+        <span>click</span>
+    </div>
+
+    <main class="content">
+        <section class="profiles">
+            <!-- Perfis serão renderizados dinamicamente pela API -->
+        </section>
+    </main>
+
+    <script>
+    (function () {
+        var audio = document.getElementById('bg-audio');
+        var slider = document.getElementById('volume');
+        var toggle = document.getElementById('volume-toggle');
+        var overlay = document.getElementById('intro-overlay');
+
+        function setVolume(v) {
+            var vol = Math.max(0, Math.min(1, Number(v)));
+            audio.volume = vol;
+            updateIcon();
+        }
+
+        // volume inicial ~17%
+        slider.value = 0.17;
+        setVolume(slider.value);
+        slider.addEventListener('input', function (e) { setVolume(e.target.value); });
+
+        function updateIcon() {
+            var isMuted = audio.muted || audio.volume === 0;
+            var level = isMuted ? 'mute' : (audio.volume < 0.33 ? 'low' : (audio.volume < 0.66 ? 'mid' : 'high'));
+            var svgHtml;
+            if (level === 'mute') {
+                svgHtml = '<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">\
+                    <path d="M4 9v6h3l5 4V5L7 9H4z" fill="currentColor"></path>\
+                    <path d="M16 8l-1.41 1.41L17.17 12l-2.58 2.59L16 16l2.59-2.59L21.17 16 22.59 14.59 20 12l2.59-2.59L21.17 8 18.59 10.59 16 8z" fill="currentColor"></path>\
+                </svg>';
+            } else if (level === 'low') {
+                svgHtml = '<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">\
+                    <path d="M4 9v6h3l5 4V5L7 9H4z" fill="currentColor"></path>\
+                </svg>';
+            } else if (level === 'mid') {
+                svgHtml = '<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">\
+                    <path d="M4 9v6h3l5 4V5L7 9H4z" fill="currentColor"></path>\
+                    <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v8.06c1.48-.74 2.5-2.26 2.5-4.03z" fill="currentColor" opacity=".7"></path>\
+                </svg>';
+            } else {
+                svgHtml = '<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">\
+                    <path d="M4 9v6h3l5 4V5L7 9H4z" fill="currentColor"></path>\
+                    <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v8.06c1.48-.74 2.5-2.26 2.5-4.03z" fill="currentColor" opacity=".7"></path>\
+                    <path d="M14 3.23v2.06c2.89 1 5 3.77 5 6.71s-2.11 5.71-5 6.71v2.06c4.01-1.1 7-4.89 7-8.77s-2.99-7.67-7-8.77z" fill="currentColor" opacity=".45"></path>\
+                </svg>';
+            }
+            toggle.innerHTML = svgHtml;
+        }
+
+        toggle.addEventListener('click', function () {
+            audio.muted = !audio.muted;
+            updateIcon();
+        });
+
+        // Tela de entrada: fade-out e início do áudio
+        function enterSite() {
+            overlay.classList.add('fade-out');
+            var p = audio.play();
+            if (p && typeof p.catch === 'function') { p.catch(function () {}); }
+            var onDone = function (e) {
+                if (e && e.target !== overlay) return;
+                overlay.classList.add('hidden');
+                overlay.removeEventListener('transitionend', onDone);
+            };
+            overlay.addEventListener('transitionend', onDone);
+        }
+        overlay.addEventListener('click', enterSite);
+
+        // Controles de tema e música
+        (function initControls() {
+            var themeToggle = document.getElementById('theme-toggle');
+            var musicToggle = document.getElementById('music-toggle');
+            var themeDropdown = document.getElementById('theme-dropdown');
+            var musicDropdown = document.getElementById('music-dropdown');
+            var themeBox = themeToggle.closest('.control-box');
+            var musicBox = musicToggle.closest('.control-box');
+            var currentMusicEl = document.getElementById('current-music');
+
+            // Fechar dropdowns ao clicar fora
+            function closeAllDropdowns() {
+                themeBox.classList.remove('active');
+                musicBox.classList.remove('active');
+                themeToggle.classList.remove('active');
+                musicToggle.classList.remove('active');
+            }
+
+            // Toggle temas
+            themeToggle.addEventListener('click', function (e) {
+                e.stopPropagation();
+                var isActive = themeBox.classList.contains('active');
+                closeAllDropdowns();
+                if (!isActive) {
+                    themeBox.classList.add('active');
+                    themeToggle.classList.add('active');
+                }
+            });
+
+            // Toggle música
+            musicToggle.addEventListener('click', function (e) {
+                e.stopPropagation();
+                var isActive = musicBox.classList.contains('active');
+                closeAllDropdowns();
+                if (!isActive) {
+                    musicBox.classList.add('active');
+                    musicToggle.classList.add('active');
+                }
+            });
+
+            // Mapeamento de tema para nome exibido
+            var themeNames = {
+                'default': 'Padrão',
+                's2': 's2',
+                'sixfeet': 'sixfeet'
+            };
+            
+            // Função para atualizar o nome do tema atual
+            var currentThemeEl = document.getElementById('current-theme');
+            function updateThemeName(theme) {
+                var themeName = themeNames[theme] || 'Padrão';
+                if (currentThemeEl) {
+                    currentThemeEl.textContent = themeName;
+                }
+            }
+            
+            // Atualizar nome do tema ao carregar a página
+            var currentTheme = document.body.getAttribute('data-theme') || 'default';
+            updateThemeName(currentTheme);
+
+            // Seleção de tema
+            Array.prototype.forEach.call(themeDropdown.querySelectorAll('.dropdown-item'), function (item) {
+                item.addEventListener('click', function () {
+                    var theme = item.getAttribute('data-theme');
+                    document.body.setAttribute('data-theme', theme);
+                    
+                    // Atualizar nome do tema
+                    updateThemeName(theme);
+                    
+                    // Trocar vídeo de fundo baseado no tema
+                    var bgVideo = document.getElementById('bg-video');
+                    if (theme === 's2') {
+                        bgVideo.src = 'https://cdn.discordapp.com/attachments/1408996422748995704/1433737432687317052/TikDownloader.io_7519240558603193622_hd.mp4?ex=6905c789&is=69047609&hm=8ed289eb6e3f937924720d3731af146e672fd3822347cf472ffb87605c285520&';
+                        bgVideo.load();
+                    } else if (theme === 'sixfeet') {
+                        bgVideo.src = 'https://cdn.discordapp.com/attachments/1408996422748995704/1433738702521368576/corpserabbitt_musicaldown.com_1761328453.mp4?ex=6905c8b8&is=69047738&hm=1fc18bd60e7e037536a4affb5ef24905ff3470c41baa41424e51b5f96c0338ce&';
+                        bgVideo.load();
+                    } else if (theme === 'default') {
+                        bgVideo.src = 'https://cdn.discordapp.com/attachments/1233881458104598613/1433338245177020416/chrisis.mp4?ex=6904fc83&is=6903ab03&hm=48440c7b549962df7fc578f57d405d5de42f35600fb602bdd72bb531a996cf70&';
+                        bgVideo.load();
+                    }
+                    
+                    // Trocar música padrão baseado no tema
+                    var wasPlaying = !audio.paused;
+                    if (theme === 's2') {
+                        audio.src = 'songs/talksum.mp3';
+                        currentMusicEl.textContent = 'talksum.mp3';
+                    } else if (theme === 'sixfeet') {
+                        audio.src = 'songs/six.mp3';
+                        currentMusicEl.textContent = 'six.mp3';
+                    } else if (theme === 'default') {
+                        audio.src = 'songs/where.mp3';
+                        currentMusicEl.textContent = 'where.mp3';
+                    }
+                    if (wasPlaying) {
+                        audio.play().catch(function () {});
+                    }
+                    
+                    closeAllDropdowns();
+                });
+            });
+
+            // Seleção de música
+            Array.prototype.forEach.call(musicDropdown.querySelectorAll('.dropdown-item'), function (item) {
+                item.addEventListener('click', function () {
+                    var musicFile = item.getAttribute('data-music');
+                    var wasPlaying = !audio.paused;
+                    audio.src = 'songs/' + musicFile;
+                    currentMusicEl.textContent = musicFile;
+                    if (wasPlaying) {
+                        audio.play().catch(function () {});
+                    }
+                    closeAllDropdowns();
+                });
+            });
+
+            // Fechar ao clicar fora
+            document.addEventListener('click', closeAllDropdowns);
+        })();
+
+        // Render dynamic profile(s) by Discord ID using backend API
+        (function renderProfiles() {
+            // Social icons saved for future use:
+            var SOCIAL_ICONS = {
+                instagram: 'https://cdn.discordapp.com/attachments/1255692212717752513/1357706697245851788/ezgif-3-6599109c19-ezgif.com-instagif.gif?ex=690560a5&is=69040f25&hm=1fe537020b558bb27ab3b1a0bb07391d87a7e6c00c7a86c7c8585e6dbc1a612a&',
+                tiktok: 'https://cdn.discordapp.com/attachments/1255692212717752513/1357706695782043892/ezgif-3-9a20944057-ezgif.com-instagif.gif?ex=690560a5&is=69040f25&hm=478a152932eb73217499fcee1cbe0574af584501cffde44b77943dd81cbe5c87&',
+                roblox: 'https://cdn.discordapp.com/attachments/1255692212717752513/1357706696218120212/ezgif-6-3e07f10f7a-ezgif.com-instagif.gif?ex=690560a5&is=69040f25&hm=c14ba5c95ce2fb0e227611795f1a94b2cfd4a94ca9a3750faeb31aec78be1cec&',
+                steam: 'https://cdn.discordapp.com/attachments/1255692212717752513/1335398250005532742/Logo20.png?ex=69054c89&is=6903fb09&hm=3400dc3cce3daddb379ea0a841bb577e494b3ca2cca1ec4d36e7f836d258bbc3&',
+                telegram: 'https://cdn.discordapp.com/attachments/1255692212717752513/1335387732259770391/Logo9.png?ex=690542bd&is=6903f13d&hm=606d873b127a5280a8692667d4f26fd2d0f1cf5db9a0992368d68d4224d29aa0&',
+                discord: 'https://cdn.discordapp.com/attachments/1255692212717752513/1335387733018808322/Logo3.png?ex=690542bd&is=6903f13d&hm=968657274a523a9366a1c74ba734ad34b188fd3ddd48136754e7ef6ec7ab9dc8&'
+            };
+
+            var ids = [ '1098101847014777002', '1419932037053153402' ]; // add more IDs here
+            var container = document.querySelector('.profiles');
+            if (!container) return;
+
+            Promise.all(ids.map(function (id) {
+                return fetch('/api/user/' + id).then(function (r) { return r.json(); }).then(function (u) {
+                    if (u && !u.error) return u;
+                    // fallback minimal shape
+                    return { id: id, username: 'user', tag: '@user', avatarUrl: 'https://cdn.discordapp.com/embed/avatars/0.png?size=128' };
+                }).catch(function () { return { id: id, username: 'user', tag: '@user', avatarUrl: 'https://cdn.discordapp.com/embed/avatars/0.png?size=128' }; });
+            })).then(function (users) {
+                // Buscar links sociais e cores do glow para cada usuário
+                Promise.all(users.map(function (u) {
+                    return Promise.all([
+                        fetch('/api/social-links/' + u.id).then(function (r) { return r.json(); }).catch(function () { return []; }),
+                        fetch('/api/glow-color/' + u.id).then(function (r) { return r.json(); }).catch(function () { return { color: null }; })
+                    ]).then(function (results) {
+                        return { user: u, links: Array.isArray(results[0]) ? results[0] : [], glowColor: results[1].color || null };
+                    });
+                })).then(function (userData) {
+                    // Mapear platforms para ícones e nomes
+                    var platformMap = {
+                        instagram: { icon: SOCIAL_ICONS.instagram, alt: 'Instagram' },
+                        tiktok: { icon: SOCIAL_ICONS.tiktok, alt: 'TikTok' },
+                        roblox: { icon: SOCIAL_ICONS.roblox, alt: 'Roblox' },
+                        discord: { icon: SOCIAL_ICONS.discord, alt: 'Discord' },
+                        steam: { icon: SOCIAL_ICONS.steam, alt: 'Steam' },
+                        telegram: { icon: SOCIAL_ICONS.telegram, alt: 'Telegram' }
+                    };
+
+                    var html = userData.map(function (ud) {
+                        var u = ud.user;
+                        var glowColor = ud.glowColor;
+                        var links = (ud.links || []).map(function (l) {
+                            var p = platformMap[l.platform];
+                            if (!p) return null;
+                            return { icon: p.icon, href: l.href, alt: p.alt };
+                        }).filter(Boolean);
+                        var socialBtns = links.length ? '<div class="profile-socials">' + links.map(function (l) {
+                            return '<a class="social-btn" href="' + l.href + '" target="_blank" rel="noopener"><img src="' + l.icon + '" alt="' + (l.alt || '') + '"></a>';
+                        }).join('') + '</div>' : '';
+                        var glowStyle = glowColor ? ' style="--glow-color: ' + glowColor + ';"' : '';
+                        return '\n            <article class="profile-card" data-userid="' + u.id + '"' + glowStyle + '>\n                <div class="profile-inner">\n                    <div class="avatar-wrap">\n                        <img class="avatar" src="' + u.avatarUrl + '" alt="' + (u.username || 'avatar') + '">\n                    </div>\n                    <h2 class="profile-name">' + (u.username || '') + '</h2>\n                    <p class="profile-tag">' + (u.tag || '') + '</p>\n                    ' + socialBtns + '\n                </div>\n            </article>\n          ';
+                    }).join('');
+                    container.innerHTML = html;
+
+                    // Ajustar tamanho dos ícones baseado na quantidade
+                    Array.prototype.forEach.call(document.querySelectorAll('.profile-socials'), function (socials) {
+                        var count = socials.querySelectorAll('.social-btn').length;
+                        var baseSize = 32; // tamanho base para 4 ícones
+                        var calculatedSize = Math.max(20, Math.min(baseSize, (baseSize * 4) / count)); // proporção: 4 ícones = 32px, mais ícones = menor
+                        socials.style.setProperty('--icon-size', calculatedSize + 'px');
+                    });
+
+                    // Aplicar cores personalizadas do glow e do texto
+                    Array.prototype.forEach.call(document.querySelectorAll('.profile-card[style*="--glow-color"]'), function (card) {
+                        var color = card.style.getPropertyValue('--glow-color').trim();
+                        if (!color) return;
+                        // Converter hex para rgba (suporta #RGB e #RRGGBB)
+                        var hex = color.replace('#', '');
+                        var r, g, b;
+                        if (hex.length === 3) {
+                            r = parseInt(hex[0] + hex[0], 16);
+                            g = parseInt(hex[1] + hex[1], 16);
+                            b = parseInt(hex[2] + hex[2], 16);
+                        } else if (hex.length === 6) {
+                            r = parseInt(hex.substring(0, 2), 16);
+                            g = parseInt(hex.substring(2, 4), 16);
+                            b = parseInt(hex.substring(4, 6), 16);
+                        } else return;
+                        var nameEl = card.querySelector('.profile-name');
+                        var tagEl = card.querySelector('.profile-tag');
+                        if (nameEl) {
+                            nameEl.style.color = color;
+                            nameEl.style.textShadow = '0 0 8px rgba(' + r + ',' + g + ',' + b + ',0.45), 0 0 16px rgba(' + r + ',' + g + ',' + b + ',0.30)';
+                        }
+                        if (tagEl) {
+                            tagEl.style.color = color;
+                            tagEl.style.textShadow = '0 0 7px rgba(' + r + ',' + g + ',' + b + ',0.40), 0 0 14px rgba(' + r + ',' + g + ',' + b + ',0.25)';
+                        }
+                    });
+                });
+            });
+        })();
+    })();
+    </script>
+</body>
+</html>
+
+
